@@ -2,24 +2,22 @@ package main
 
 import (
 	"fmt"
-	"os/exec"
+	"os"
+
+	tea "github.com/charmbracelet/bubbletea"
 )
 
 func main() {
-	cmd := exec.Command("az", "group", "list", "--output", "json")
-	output, err := cmd.Output()
+	rgs, err := FetchResourceGroups()
 	if err != nil {
-		fmt.Println("Error:", err)
-		return
+		fmt.Println("Error fetching resource groups:", err)
+		os.Exit(1)
 	}
 
-	rgs, err := ParseGroups(output)
-	if err != nil {
-		fmt.Println("Error:", err)
-		return
-	}
-
-	for i, g := range rgs {
-		fmt.Printf("[%d] %s (%s)\n", i, g.Name, g.Location)
+	m := NewModel(rgs)
+	p := tea.NewProgram(m)
+	if _, err := p.Run(); err != nil {
+		fmt.Println("Error running TUI:", err)
+		os.Exit(1)
 	}
 }
